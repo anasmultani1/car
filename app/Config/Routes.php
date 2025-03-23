@@ -21,12 +21,3 @@ $routes->post('/save-car', 'CarController::save');            // Save new car da
 
 // Review-related Routes
 $routes->post('/save-review', 'ReviewController::save');      // Save a review for a car
-
-// User Authentication Routes
-$routes->get('/register', 'UserController::register');         // Display registration form
-$routes->post('/store', 'UserController::store');               // Save new user registration
-$routes->get('/login', 'UserController::login');                // Display login form
-$routes->post('/authenticate', 'UserController::authenticate'); // User login process
-$routes->get('/logout', 'UserController::logout');              // User logout
-$routes->get('/dbtest', 'DatabaseTest::index');
-
