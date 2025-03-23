@@ -3,14 +3,23 @@
 namespace App\Controllers;
 
 use App\Models\CarModel;
+use App\Models\ReviewModel;
 use CodeIgniter\Controller;
 
 class CarController extends Controller
 {
     public function index()
     {
-        $model = new CarModel();
-        $data['cars'] = $model->findAll();
+        $carModel = new CarModel();
+        $reviewModel = new ReviewModel();
+
+        $cars = $carModel->findAll();
+
+        foreach ($cars as &$car) {
+            $car['reviews'] = $reviewModel->where('car_id', $car['id'])->findAll();
+        }
+
+        $data['cars'] = $cars;
 
         return view('car_list', $data);
     }

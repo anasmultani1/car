@@ -13,8 +13,7 @@ class ReviewController extends Controller
 
         $data = [
             'car_id' => $this->request->getPost('car_id'),
-            'user_id' => session()->get('user_id'),
-            'username' => session()->get('username'),
+            'username' => $this->request->getPost('username'),
             'review' => $this->request->getPost('review'),
             'rating' => $this->request->getPost('rating')
         ];
