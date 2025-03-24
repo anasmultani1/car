@@ -7,9 +7,26 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">All Cars</h1>
-        <a href="<?= base_url('/add-car'); ?>" class="btn btn-success mb-3">Add New Car</a>
+        <!-- Top Navigation Bar -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>All Cars</h1>
+            <div>
+                <?php if (session()->has('user_id')): ?>
+                    <span>Welcome, <?= session()->get('username'); ?>!</span>
+                    <a href="<?= base_url('/logout'); ?>" class="btn btn-danger">Logout</a>
+                <?php else: ?>
+                    <a href="<?= base_url('/login'); ?>" class="btn btn-primary">Login</a>
+                    <a href="<?= base_url('/register'); ?>" class="btn btn-success">Register</a>
+                <?php endif; ?>
+            </div>
+        </div>
 
+        <!-- Add New Car Button (Only for Logged-In Users) -->
+        <?php if (session()->has('user_id')): ?>
+            <a href="<?= base_url('/add-car'); ?>" class="btn btn-success mb-3">Add New Car</a>
+        <?php endif; ?>
+
+        <!-- Display All Cars -->
         <?php foreach ($cars as $car): ?>
             <div class="card mb-4">
                 <div class="card-body">
@@ -35,19 +52,20 @@
                         <p>No reviews yet.</p>
                     <?php endif; ?>
 
-                    <!-- Add Review Form -->
-                    <form class="review-form mt-3" data-car-id="<?= $car['id']; ?>">
-                        <div class="mb-3">
-                            <input type="text" name="username" class="form-control" placeholder="Your Name" required>
-                        </div>
-                        <div class="mb-3">
-                            <textarea name="review" class="form-control" placeholder="Write your review" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <input type="number" name="rating" class="form-control" min="1" max="5" placeholder="Rating (1-5)" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit Review</button>
-                    </form>
+                    <!-- Add Review Form (Only For Logged-In Users) -->
+                    <?php if (session()->has('user_id')): ?>
+                        <form class="review-form mt-3" data-car-id="<?= $car['id']; ?>">
+                            <div class="mb-3">
+                                <textarea name="review" class="form-control" placeholder="Write your review" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <input type="number" name="rating" class="form-control" min="1" max="5" placeholder="Rating (1-5)" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                        </form>
+                    <?php else: ?>
+                        <p><a href="<?= base_url('/login'); ?>">Login to add a review</a></p>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -81,4 +99,3 @@
     </script>
 </body>
 </html>
- 
