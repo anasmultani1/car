@@ -21,3 +21,11 @@ $routes->post('/save-car', 'CarController::save');            // Save new car da
 
 // Review-related Routes
 $routes->post('/save-review', 'ReviewController::save');      // Save a review for a car
+
+
+// User Authentication Routes
+$routes->get('/register', 'UserController::register');
+$routes->post('/store', 'UserController::store');
+$routes->get('/login', 'UserController::login');
+$routes->post('/authenticate', 'UserController::authenticate');
+$routes->get('/logout', 'UserController::logout');
