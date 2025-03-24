@@ -6,18 +6,23 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1>Login</h1>
-        <form action="<?= base_url('/authenticate'); ?>" method="post">
-            <div class="mb-3">
-                <label>Username:</label>
-                <input type="text" name="username" class="form-control" required>
+        <div class="card p-4 shadow-sm">
+            <h1 class="mb-4 text-center">Login</h1>
+            <form action="<?= base_url('/authenticate'); ?>" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Username:</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password:</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+            <div class="mt-3 text-center">
+                Don't have an account? <a href="<?= base_url('/register'); ?>">Register here</a>
             </div>
-            <div class="mb-3">
-                <label>Password:</label>
-                <input type="password" name="password" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
+        </div>
     </div>
 </body>
 </html>
