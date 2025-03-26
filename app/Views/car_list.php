@@ -4,11 +4,17 @@
     <title>Car List</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .star {
+            color: gold;
+            font-size: 20px;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
 
-        <!-- Top Navigation Bar -->
+        <!-- Navigation Bar -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>All Cars</h1>
             <div>
@@ -22,7 +28,7 @@
             </div>
         </div>
 
-        <!-- Add New Car Button -->
+        <!-- Add New Car -->
         <?php if (session()->has('user_id')): ?>
             <a href="<?= base_url('/add-car'); ?>" class="btn btn-success mb-3">Add New Car</a>
         <?php endif; ?>
@@ -38,14 +44,26 @@
                         <img src="<?= $car['poster']; ?>" alt="Poster" class="img-fluid mb-3">
                     <?php endif; ?>
 
+                    <!-- Show Average Rating -->
+                    <?php if ($car['average_rating'] !== null): ?>
+                        <p>Average Rating: 
+                            <?php for ($i = 0; $i < 5; $i++): ?>
+                                <span class="star"><?= $i < round($car['average_rating']) ? '★' : '☆'; ?></span>
+                            <?php endfor; ?>
+                            (<?= round($car['average_rating'], 1); ?>/5)
+                        </p>
+                    <?php else: ?>
+                        <p>No ratings yet.</p>
+                    <?php endif; ?>
+
                     <!-- Display Reviews -->
                     <h4>Reviews:</h4>
                     <?php if (!empty($car['reviews'])): ?>
                         <ul class="list-group mb-3">
                             <?php foreach ($car['reviews'] as $review): ?>
                                 <li class="list-group-item">
-                                    <strong><?= $review['username']; ?></strong> - 
-                                    <?= $review['review']; ?> (Rating: <?= $review['rating']; ?>/5)
+                                    <strong><?= $review['username']; ?></strong> - <?= $review['review']; ?> 
+                                    (Rating: <?= $review['rating']; ?>/5)
                                 </li>
                             <?php endforeach; ?>
                         </ul>
@@ -72,7 +90,7 @@
         <?php endforeach; ?>
     </div>
 
-    <!-- AJAX Script for Submitting Reviews -->
+    <!-- AJAX for Reviews -->
     <script>
         $(document).ready(function() {
             $('.review-form').submit(function(e) {

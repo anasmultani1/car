@@ -16,7 +16,18 @@ class CarController extends Controller
         $cars = $carModel->findAll();
 
         foreach ($cars as &$car) {
-            $car['reviews'] = $reviewModel->where('car_id', $car['id'])->findAll();
+            $reviews = $reviewModel->where('car_id', $car['id'])->findAll();
+            $car['reviews'] = $reviews;
+
+            if (!empty($reviews)) {
+                $totalRating = 0;
+                foreach ($reviews as $review) {
+                    $totalRating += $review['rating'];
+                }
+                $car['average_rating'] = $totalRating / count($reviews);
+            } else {
+                $car['average_rating'] = null;
+            }
         }
 
         $data['cars'] = $cars;
