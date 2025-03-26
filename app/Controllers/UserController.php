@@ -53,4 +53,12 @@ class UserController extends Controller
         session()->destroy();
         return redirect()->to('/login');
     }
+    public function isAdmin()
+{
+    $model = new UserModel();
+    $user = $model->find(session()->get('user_id'));
+
+    return $user && $user['role'] === 'admin';
+}
+
 }

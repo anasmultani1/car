@@ -29,3 +29,7 @@ $routes->post('/store', 'UserController::store');
 $routes->get('/login', 'UserController::login');
 $routes->post('/authenticate', 'UserController::authenticate');
 $routes->get('/logout', 'UserController::logout');
+$routes->get('/dashboard', 'DashboardController::index');
+$routes->get('/delete-car/(:num)', 'DashboardController::deleteCar/$1');
+$routes->get('/delete-review/(:num)', 'DashboardController::deleteReview/$1');
+
