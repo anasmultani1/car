@@ -7,12 +7,13 @@
 </head>
 <body>
     <div class="container mt-5">
+
         <!-- Top Navigation Bar -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>All Cars</h1>
             <div>
                 <?php if (session()->has('user_id')): ?>
-                    <span>Welcome, <?= session()->get('username'); ?>!</span>
+                    <span>Welcome, <strong><?= session()->get('username'); ?></strong>!</span>
                     <a href="<?= base_url('/logout'); ?>" class="btn btn-danger">Logout</a>
                 <?php else: ?>
                     <a href="<?= base_url('/login'); ?>" class="btn btn-primary">Login</a>
@@ -21,18 +22,18 @@
             </div>
         </div>
 
-        <!-- Add New Car Button (Only for Logged-In Users) -->
+        <!-- Add New Car Button -->
         <?php if (session()->has('user_id')): ?>
             <a href="<?= base_url('/add-car'); ?>" class="btn btn-success mb-3">Add New Car</a>
         <?php endif; ?>
 
-        <!-- Display All Cars -->
+        <!-- Display Cars -->
         <?php foreach ($cars as $car): ?>
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
                     <h3 class="card-title"><?= $car['name']; ?> - <?= $car['brand']; ?> (<?= $car['release_year']; ?>)</h3>
                     <p class="card-text"><?= $car['description']; ?></p>
-                    
+
                     <?php if (isset($car['poster']) && !empty($car['poster'])): ?>
                         <img src="<?= $car['poster']; ?>" alt="Poster" class="img-fluid mb-3">
                     <?php endif; ?>
@@ -43,16 +44,16 @@
                         <ul class="list-group mb-3">
                             <?php foreach ($car['reviews'] as $review): ?>
                                 <li class="list-group-item">
-                                    <strong><?= $review['username']; ?>:</strong> 
+                                    <strong><?= $review['username']; ?></strong> - 
                                     <?= $review['review']; ?> (Rating: <?= $review['rating']; ?>/5)
                                 </li>
                             <?php endforeach; ?>
                         </ul>
                     <?php else: ?>
-                        <p>No reviews yet.</p>
+                        <p>No reviews yet. Be the first to review!</p>
                     <?php endif; ?>
 
-                    <!-- Add Review Form (Only For Logged-In Users) -->
+                    <!-- Add Review Form -->
                     <?php if (session()->has('user_id')): ?>
                         <form class="review-form mt-3" data-car-id="<?= $car['id']; ?>">
                             <div class="mb-3">
