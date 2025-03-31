@@ -3,118 +3,89 @@
 <head>
     <title>Car List</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        .star {
-            color: gold;
-            font-size: 20px;
+        body {
+            background-color: #f9f9f9;
+        }
+        .car-image {
+            height: 250px;
+            width: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: scale(1.02);
+        }
+        .average-rating {
+            color: #f39c12;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
 
-        <!-- Navigation Bar -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>All Cars</h1>
-            <div>
-                <?php if (session()->has('user_id')): ?>
-                    <span>Welcome, <strong><?= session()->get('username'); ?></strong>!</span>
-                    <a href="<?= base_url('/logout'); ?>" class="btn btn-danger">Logout</a>
-                <?php else: ?>
-                    <a href="<?= base_url('/login'); ?>" class="btn btn-primary">Login</a>
-                    <a href="<?= base_url('/register'); ?>" class="btn btn-success">Register</a>
-                <?php endif; ?>
-            </div>
-        </div>
+<div class="container mt-5">
 
-        <!-- Add New Car -->
-        <?php if (session()->has('user_id')): ?>
-            <a href="<?= base_url('/add-car'); ?>" class="btn btn-success mb-3">Add New Car</a>
-        <?php endif; ?>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🚘 Car Explorer</h1>
 
-        <!-- Display Cars -->
-        <?php foreach ($cars as $car): ?>
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <h3 class="card-title"><?= $car['name']; ?> - <?= $car['brand']; ?> (<?= $car['release_year']; ?>)</h3>
-                    <p class="card-text"><?= $car['description']; ?></p>
-
-                    <?php if (isset($car['poster']) && !empty($car['poster'])): ?>
-                        <img src="<?= $car['poster']; ?>" alt="Poster" class="img-fluid mb-3">
-                    <?php endif; ?>
-
-                    <!-- Show Average Rating -->
-                    <?php if ($car['average_rating'] !== null): ?>
-                        <p>Average Rating: 
-                            <?php for ($i = 0; $i < 5; $i++): ?>
-                                <span class="star"><?= $i < round($car['average_rating']) ? '★' : '☆'; ?></span>
-                            <?php endfor; ?>
-                            (<?= round($car['average_rating'], 1); ?>/5)
-                        </p>
-                    <?php else: ?>
-                        <p>No ratings yet.</p>
-                    <?php endif; ?>
-
-                    <!-- Display Reviews -->
-                    <h4>Reviews:</h4>
-                    <?php if (!empty($car['reviews'])): ?>
-                        <ul class="list-group mb-3">
-                            <?php foreach ($car['reviews'] as $review): ?>
-                                <li class="list-group-item">
-                                    <strong><?= $review['username']; ?></strong> - <?= $review['review']; ?> 
-                                    (Rating: <?= $review['rating']; ?>/5)
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php else: ?>
-                        <p>No reviews yet. Be the first to review!</p>
-                    <?php endif; ?>
-
-                    <!-- Add Review Form -->
-                    <?php if (session()->has('user_id')): ?>
-                        <form class="review-form mt-3" data-car-id="<?= $car['id']; ?>">
-                            <div class="mb-3">
-                                <textarea name="review" class="form-control" placeholder="Write your review" required></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <input type="number" name="rating" class="form-control" min="1" max="5" placeholder="Rating (1-5)" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Submit Review</button>
-                        </form>
-                    <?php else: ?>
-                        <p><a href="<?= base_url('/login'); ?>">Login to add a review</a></p>
-                    <?php endif; ?>
-                </div>
-            </div>
-        <?php endforeach; ?>
+        <form method="get" action="<?= base_url('/carlist'); ?>" class="d-flex">
+            <input type="text" name="search" class="form-control" placeholder="Search car make (e.g. Honda, Audi)" value="<?= isset($search) ? esc($search) : ''; ?>">
+            <button type="submit" class="btn btn-primary ms-2">Search</button>
+        </form>
     </div>
 
-    <!-- AJAX for Reviews -->
-    <script>
-        $(document).ready(function() {
-            $('.review-form').submit(function(e) {
-                e.preventDefault();
+    <!-- API Results -->
+    <?php if (!empty($apiCars)): ?>
+        <h3>🌐 External Results</h3>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+            <?php foreach ($apiCars as $car): ?>
+                <div class="col">
+                    <div class="card p-2">
+                        <img src="<?= esc($car['image']); ?>" alt="Car Image" class="car-image">
+                        <div class="card-body text-center">
+                            <h6><?= esc($car['model_name']); ?> (<?= esc($car['model_year']); ?>)</h6>
+                            <small>Make: <?= esc($car['make_display']); ?></small>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 
-                var form = $(this);
-                var carId = form.data('car-id');
-                var formData = form.serialize() + '&car_id=' + carId;
+    <!-- Local DB Cars -->
+    <?php if (!empty($cars)): ?>
+        <h3 class="mt-5">📦 Cars from Our Database</h3>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+            <?php foreach ($cars as $car): ?>
+                <div class="col">
+                    <div class="card p-2">
+                        <?php if (!empty($car['poster'])): ?>
+                            <img src="<?= esc($car['poster']); ?>" class="car-image" alt="Car Poster">
+                        <?php endif; ?>
+                        <div class="card-body text-center">
+                            <h6><?= esc($car['name']); ?> (<?= esc($car['brand']); ?>)</h6>
+                            <p class="average-rating">⭐ <?= number_format($car['average_rating'], 1); ?> / 5</p>
+                            <a href="<?= base_url('/car/' . $car['id']); ?>" class="btn btn-info btn-sm">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 
-                $.ajax({
-                    url: '<?= base_url('/save-review'); ?>',
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Review submitted successfully!');
-                            location.reload();
-                        } else {
-                            alert('Failed to submit review.');
-                        }
-                    }
-                });
-            });
-        });
-    </script>
+    <?php if (empty($apiCars) && empty($cars)): ?>
+        <div class="alert alert-warning mt-4 text-center">
+            😕 No results found. Try another search!
+        </div>
+    <?php endif; ?>
+</div>
+
 </body>
 </html>
