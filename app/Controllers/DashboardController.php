@@ -2,70 +2,53 @@
 
 namespace App\Controllers;
 
-use App\Models\ReviewModel;
 use App\Models\CarModel;
-use App\Models\UserModel;
+use App\Models\ReviewModel;
 use CodeIgniter\Controller;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        if (!session()->has('user_id')) {
-            return redirect()->to('/login');
-        }
-
-        $reviewModel = new ReviewModel();
-        $userId = session()->get('user_id');
-        $userRole = (new UserModel())->find($userId)['role'];
-
-        $data = [
-            'reviews' => $reviewModel->where('user_id', $userId)->findAll(),
-            'isAdmin' => $userRole === 'admin'
-        ];
-
-        if ($userRole === 'admin') {
-            $carModel = new CarModel();
-            $data['cars'] = $carModel->findAll();
-            $data['allReviews'] = $reviewModel->findAll();
-        }
-
+        $carModel = new CarModel();
+        $data['cars'] = $carModel->findAll();
         return view('dashboard', $data);
-    }
-
-    public function deleteCar($id)
-    {
-        $model = new CarModel();
-        $model->delete($id);
-        return redirect()->to('/dashboard');
-    }
-
-    public function deleteReview($id)
-    {
-        $model = new ReviewModel();
-        $model->delete($id);
-        return redirect()->to('/dashboard');
     }
 
     public function editCar($id)
     {
-        $model = new CarModel();
-        $data['car'] = $model->find($id);
+        $carModel = new CarModel();
+        $data['car'] = $carModel->find($id);
         return view('edit_car', $data);
     }
 
     public function updateCar($id)
     {
-        $model = new CarModel();
+        $carModel = new CarModel();
         $data = [
             'name' => $this->request->getPost('name'),
             'brand' => $this->request->getPost('brand'),
-            'description' => $this->request->getPost('description'),
-            'release_year' => $this->request->getPost('release_year')
+            'release_year' => $this->request->getPost('release_year'),
+            'engine' => $this->request->getPost('engine'),
+            'fuel' => $this->request->getPost('fuel'),
+            'transmission' => $this->request->getPost('transmission'),
+            'drive' => $this->request->getPost('drive'),
+            'doors' => $this->request->getPost('doors'),
+            'seats' => $this->request->getPost('seats'),
         ];
-        $model->update($id, $data);
+
+        $carModel->update($id, $data);
         return redirect()->to('/dashboard');
     }
+
+    public function deleteCar($id)
+    {
+        $carModel = new CarModel();
+        $carModel->delete($id);
+        return redirect()->to('/dashboard');
+    }
+
+    // ? Review Management Functions
 
     public function editReview($id)
     {
@@ -82,6 +65,16 @@ class DashboardController extends Controller
             'rating' => $this->request->getPost('rating')
         ];
         $model->update($id, $data);
-        return redirect()->to('/dashboard');
+
+        $carId = $model->find($id)['car_id'];
+        return redirect()->to('/car/' . $carId);
+    }
+
+    public function deleteReview($id)
+    {
+        $model = new ReviewModel();
+        $carId = $model->find($id)['car_id'];
+        $model->delete($id);
+        return redirect()->to('/car/' . $carId);
     }
 }

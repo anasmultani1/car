@@ -8,128 +8,154 @@ use CodeIgniter\Controller;
 
 class CarController extends Controller
 {
+    /**
+     * Show list of cars (local + API if searched)
+     */
     public function index()
     {
-        $model = new CarModel();
+        $carModel = new CarModel();
         $reviewModel = new ReviewModel();
 
         $search = $this->request->getGet('search');
+        $data['search'] = $search;
         $data['cars'] = [];
         $data['apiCars'] = [];
-        $data['search'] = $search;
 
-        try {
-            if ($search) {
-                $localCars = $model->like('name', $search)->findAll();
-                $data['cars'] = $localCars;
-
-                $apiCars = $this->fetchCarModels($search);
-                $data['apiCars'] = $apiCars ?: [];
-            } else {
-                $data['cars'] = $model->findAll();
-            }
-
-            foreach ($data['cars'] as &$car) {
-                $car['reviews'] = $reviewModel->where('car_id', $car['id'])->findAll();
-                $ratings = array_column($car['reviews'], 'rating');
-                $car['average_rating'] = count($ratings) ? array_sum($ratings) / count($ratings) : 0;
-            }
-
-            return view('car_list', $data);
-        } catch (\Exception $e) {
-            log_message('error', 'CarController::index error - ' . $e->getMessage());
-            return view('errors/html/error_500');
+        if ($search) {
+            $data['cars'] = $carModel->like('name', $search)->findAll();
+            $data['apiCars'] = $this->fetchCarModels($search) ?? [];
+        } else {
+            $data['cars'] = $carModel->findAll();
         }
+
+        foreach ($data['cars'] as &$car) {
+            $reviews = $reviewModel->where('car_id', $car['id'])->findAll();
+            $ratings = array_column($reviews, 'rating');
+            $car['average_rating'] = count($ratings) ? array_sum($ratings) / count($ratings) : 0;
+        }
+
+        return view('car_list', $data);
     }
 
-    public function fetchCarModels($make)
+    /**
+     * Call external API and fetch car model data + image
+     */
+    private function fetchCarModels($make)
     {
-        $makeEncoded = urlencode(strtolower($make));
-        $url = "https://www.carqueryapi.com/api/0.3/?cmd=getModels&make={$makeEncoded}&sold_in_us=1";
+        $make = urlencode(strtolower($make));
+        $url = "https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/{$make}?format=json";
 
         try {
             $response = file_get_contents($url);
-            if (!$response) throw new \Exception("CarQuery API failed.");
-
-            if (str_starts_with($response, 'var models = ')) {
-                $response = str_replace('var models = ', '', $response);
-                $response = trim($response, ';');
-            }
-
             $data = json_decode($response, true);
-
             $cars = [];
-            if (!empty($data['Models'])) {
-                foreach ($data['Models'] as $car) {
-                    $modelName = $car['model_name'] ?? 'Unknown';
-                    $year = $car['model_year'] ?? 'Unknown';
 
-                    $image = $this->fetchCarImage($makeEncoded . ' ' . $modelName);
+            foreach ($data['Results'] as $model) {
+                $name = $model['Model_Name'];
+                $brand = $model['Make_Name'];
+                $searchImage = urlencode("{$brand} {$name}");
 
-                    $cars[] = [
-                        'model_name'   => $modelName,
-                        'model_year'   => $year,
-                        'make_display' => ucfirst($make),
-                        'image'        => $image,
-                    ];
-                }
+                $imgXml = file_get_contents("https://www.carimagery.com/api.asmx/GetImageUrl?searchTerm=$searchImage");
+                preg_match('/<string.*?>(.*?)<\\/string>/', $imgXml, $matches);
+                $image = $matches[1] ?? 'https://cdn-icons-png.flaticon.com/512/743/743007.png';
+
+                $cars[] = [
+                    'model_name' => $name,
+                    'make_display' => $brand,
+                    'model_year' => 'N/A',
+                    'poster' => $image,
+                    'engine' => 'N/A',
+                    'fuel' => 'N/A',
+                    'transmission' => 'N/A',
+                    'drive' => 'N/A',
+                    'doors' => 'N/A',
+                    'seats' => 'N/A',
+                ];
             }
 
             return $cars;
-        } catch (\Exception $e) {
-            log_message('error', 'fetchCarModels Error: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            log_message('error', 'API Fetch Failed: ' . $e->getMessage());
             return null;
         }
     }
 
-    public function fetchCarImage($query)
+    /**
+     * Save a car (fetched via API) into local DB
+     */
+    public function saveCarAndRedirect()
     {
-        try {
-            $url = "http://www.carimagery.com/api.asmx/GetImageUrl?searchTerm=" . urlencode($query);
-            $xml = file_get_contents($url);
-            preg_match('/<string.*?>(.*?)<\/string>/', $xml, $matches);
+        $carModel = new CarModel();
+        $data = [
+            'name' => $this->request->getPost('model_name'),
+            'brand' => $this->request->getPost('make'),
+            'release_year' => $this->request->getPost('model_year'),
+            'poster' => $this->request->getPost('poster'),
+            'engine' => $this->request->getPost('engine'),
+            'fuel' => $this->request->getPost('fuel'),
+            'transmission' => $this->request->getPost('transmission'),
+            'drive' => $this->request->getPost('drive'),
+            'doors' => $this->request->getPost('doors'),
+            'seats' => $this->request->getPost('seats'),
+            'description' => 'Imported from API'
+        ];
 
-            $imageUrl = $matches[1] ?? null;
-
-            if ($imageUrl && filter_var($imageUrl, FILTER_VALIDATE_URL)) {
-                return $imageUrl;
-            }
-        } catch (\Exception $e) {
-            log_message('error', 'Car image fetch error: ' . $e->getMessage());
-        }
-
-        return base_url('assets/images/default-car.jpg');
+        $carModel->save($data);
+        return redirect()->to('/carlist');
     }
 
+    /**
+     * View a car and all reviews for it
+     */
     public function view($id)
     {
         $carModel = new CarModel();
         $reviewModel = new ReviewModel();
 
         $car = $carModel->find($id);
-        if (!$car) return redirect()->to('/carlist');
-
-        $car['reviews'] = $reviewModel->where('car_id', $id)->findAll();
-        $ratings = array_column($car['reviews'], 'rating');
+        $reviews = $reviewModel->where('car_id', $id)->findAll();
+        $ratings = array_column($reviews, 'rating');
         $car['average_rating'] = count($ratings) ? array_sum($ratings) / count($ratings) : 0;
+        $car['reviews'] = $reviews;
 
         return view('car_detail', ['car' => $car]);
     }
 
-    public function saveCarAndRedirect()
+    /**
+     * Save user review (1 per user per car)
+     */
+    public function saveReview()
     {
-        $carModel = new CarModel();
+        $session = session();
+        $userId = $session->get('user_id');
+        $username = $session->get('username');
+        $carId = $this->request->getPost('car_id');
+
+        if (!$userId || !$username) {
+            return redirect()->to('/login')->with('error', 'Please login to submit a review.');
+        }
+
+        $reviewModel = new ReviewModel();
+
+        // Prevent duplicate reviews
+        $existing = $reviewModel
+            ->where('user_id', $userId)
+            ->where('car_id', $carId)
+            ->first();
+
+        if ($existing) {
+            return redirect()->to("/car/{$carId}")->with('error', 'You already submitted a review for this car.');
+        }
 
         $data = [
-            'name' => $this->request->getPost('name'),
-            'brand' => $this->request->getPost('brand'),
-            'release_year' => $this->request->getPost('release_year'),
-            'poster' => $this->request->getPost('poster'),
-            'description' => $this->request->getPost('description'),
+            'car_id'   => $carId,
+            'user_id'  => $userId,
+            'username' => $username,
+            'review'   => $this->request->getPost('review'),
+            'rating'   => $this->request->getPost('rating')
         ];
 
-        $carModel->save($data);
-
-        return $this->response->setJSON(['redirect' => base_url('/carlist')]);
+        $reviewModel->save($data);
+        return redirect()->to("/car/{$carId}")->with('success', 'Review added!');
     }
 }
