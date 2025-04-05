@@ -3,6 +3,7 @@
 <head>
     <title><?= esc($car['name']) ?> Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <style>
         body {
             background-color: #f8f9fa;
@@ -12,6 +13,11 @@
             height: auto;
             border-radius: 10px;
             margin-bottom: 20px;
+        }
+        #map {
+            height: 400px;
+            margin-top: 20px;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -102,6 +108,73 @@
         </div>
     <?php endif; ?>
 
+    <!-- Nearby Showrooms -->
+    <h4 class="mt-5">Nearby Car Showrooms</h4>
+    <div id="map" class="mb-3">Loading map...</div>
+    <div id="showroom-results" class="text-muted">Searching for nearby showrooms...</div>
+
 </div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            const map = L.map('map').setView([lat, lon], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
+
+            // ? This fixes the 404 issue
+            fetch(`<?= base_url('nearby-showrooms') ?>?lat=${lat}&lon=${lon}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data); // optional debug
+                    const container = document.getElementById('showroom-results');
+
+                    if (!data.elements.length) {
+                        container.innerHTML = '<p>No nearby showrooms found.</p>';
+                        return;
+                    }
+
+                    const maxVisible = 5;
+                    let html = '<ul class="list-group">';
+                    data.elements.forEach((el, index) => {
+                        const name = el.tags?.name || 'Unnamed showroom';
+                        const showLat = el.lat.toFixed(4);
+                        const showLon = el.lon.toFixed(4);
+
+                        html += `<li class="list-group-item showroom-item ${index >= maxVisible ? 'd-none' : ''}">
+                                    ${name} (${showLat}, ${showLon})
+                                </li>`;
+
+                        L.marker([el.lat, el.lon]).addTo(map)
+                          .bindPopup(`<b>${name}</b><br>${showLat}, ${showLon}`);
+                    });
+
+                    html += '</ul><button class="btn btn-sm btn-outline-secondary mt-2" id="toggle-showrooms">Show More</button>';
+                    container.innerHTML = html;
+
+                    document.getElementById('toggle-showrooms').addEventListener('click', () => {
+                        const hidden = document.querySelectorAll('.showroom-item.d-none');
+                        const isHidden = hidden.length > 0;
+                        hidden.forEach(item => item.classList.toggle('d-none'));
+                        toggleBtn.textContent = isHidden ? 'Show Less' : 'Show More';
+                    });
+                });
+        }, () => {
+            document.getElementById('showroom-results').innerText = "Location access denied.";
+        });
+    } else {
+        document.getElementById('showroom-results').innerText = "Geolocation is not supported by your browser.";
+    }
+});
+</script>
 </body>
 </html>

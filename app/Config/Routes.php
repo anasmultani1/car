@@ -16,19 +16,19 @@ $routes->set404Override();
 $routes->setAutoRoute(false);
 
 /*
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
 | Car Routes
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
 */
 $routes->get('/carlist', 'CarController::index');
-$routes->post('/save-car-and-redirect', 'CarController::saveCarAndRedirect'); // corrected method name
-$routes->get('/car/(:num)', 'CarController::view/$1'); // View car details
-$routes->post('/review/save', 'CarController::saveReview'); // Save review
+$routes->post('/save-car-and-redirect', 'CarController::saveCarAndRedirect');
+$routes->get('/car/(:num)', 'CarController::view/$1');
+$routes->post('/review/save', 'CarController::saveReview');
 
 /*
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
 | User Authentication Routes
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
 */
 $routes->get('/register', 'UserController::register');
 $routes->post('/store', 'UserController::store');
@@ -37,9 +37,9 @@ $routes->post('/authenticate', 'UserController::authenticate');
 $routes->get('/logout', 'UserController::logout');
 
 /*
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
 | Dashboard Routes
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
 */
 $routes->get('/dashboard', 'DashboardController::index');
 $routes->get('/delete-car/(:num)', 'DashboardController::deleteCar/$1');
@@ -50,3 +50,12 @@ $routes->post('/update-car/(:num)', 'DashboardController::updateCar/$1');
 $routes->get('/edit-review/(:num)', 'DashboardController::editReview/$1');
 $routes->post('/update-review/(:num)', 'DashboardController::updateReview/$1');
 $routes->get('/delete-review/(:num)', 'DashboardController::deleteReview/$1');
+
+/*
+|----------------------------------------------------------------------
+| Map API: Nearby Car Showrooms via Overpass API
+|----------------------------------------------------------------------
+*/
+$routes->get('/nearby-showrooms', 'LocationController::getNearbyShowrooms');
+
+
