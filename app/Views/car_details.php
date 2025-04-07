@@ -8,18 +8,18 @@
 
     <style>
         .car-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            max-width:100%;
+            height:auto;
+            border-radius:10px;
+            margin-bottom:20px;
         }
         body {
-            background-color: #f8f9fa;
+            background-color:#f8f9fa;
             font-family: Arial, sans-serif;
         }
         .card {
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius:10px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.05);
         }
     </style>
 </head>

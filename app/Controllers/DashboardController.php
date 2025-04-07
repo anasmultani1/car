@@ -15,16 +15,15 @@ class DashboardController extends Controller
         return view('dashboard', $data);
     }
 
-    public function editCar($id)
-    {
+    public function editCar($id){
         $carModel = new CarModel();
         $data['car'] = $carModel->find($id);
         return view('edit_car', $data);
     }
 
-    public function updateCar($id)
-    {
+    public function updateCar($id){
         $carModel = new CarModel();
+
         $data = [
             'name' => $this->request->getPost('name'),
             'brand' => $this->request->getPost('brand'),
@@ -41,37 +40,32 @@ class DashboardController extends Controller
         return redirect()->to('/dashboard');
     }
 
-    public function deleteCar($id)
-    {
+    public function deleteCar($id){
         $carModel = new CarModel();
         $carModel->delete($id);
         return redirect()->to('/dashboard');
     }
 
-    // ? Review Management Functions
 
-    public function editReview($id)
-    {
+    // Review Management Functions
+    public function editReview($id){
         $model = new ReviewModel();
         $data['review'] = $model->find($id);
         return view('edit_review', $data);
     }
 
-    public function updateReview($id)
-    {
+    public function updateReview($id){
         $model = new ReviewModel();
         $data = [
             'review' => $this->request->getPost('review'),
             'rating' => $this->request->getPost('rating')
         ];
         $model->update($id, $data);
-
         $carId = $model->find($id)['car_id'];
         return redirect()->to('/car/' . $carId);
     }
 
-    public function deleteReview($id)
-    {
+    public function deleteReview($id){
         $model = new ReviewModel();
         $carId = $model->find($id)['car_id'];
         $model->delete($id);
